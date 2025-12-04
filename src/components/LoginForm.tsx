@@ -2,6 +2,8 @@
 
 import { useState, FormEvent } from "react";
 import { validateLoginForm } from "@/lib/validation";
+import { loginUser } from "@/lib/authService";
+import Spinner from "@/components/Spinner";
 
 export default function LoginForm() {
     const [email, setEmail] = useState("");
@@ -10,7 +12,7 @@ export default function LoginForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsLoading(true);
 
@@ -24,20 +26,66 @@ export default function LoginForm() {
 
         setErrors({});
 
-        // Simulate login delay
-        setTimeout(() => {
-            // TODO: Connect to your external authentication service
-            // (Firebase, Auth0, Supabase, etc.)
-            console.log("Login attempt:", { email, password });
-            alert(`Welcome ${email}! (Demo only - implement real auth)`);
+        try {
+            // Call backend API
+            const response = await loginUser({ email, password });
+
+            if (response.success) {
+                // Check if email is verified
+                if (!response.data?.isEmailVerified) {
+                    // Route to email verification page
+                    setTimeout(() => {
+                        window.location.href = `/auth/verify?email=${encodeURIComponent(response.data?.email || email)}`;
+                    }, 500);
+                    return;
+                }
+
+                // Check if profile/username exists
+                if (!response.data?.profile?.username) {
+                    // Store token temporarily for profile creation
+                    if (response.data?.token) {
+                        localStorage.setItem("authToken", response.data.token);
+                    }
+                    // Route to create profile page
+                    setTimeout(() => {
+                        window.location.href = "/auth/create-profile";
+                    }, 500);
+                    return;
+                }
+
+                alert(`🎉 Welcome back ${response.data?.name}!`);
+
+                // Store token if provided
+                if (response.data?.token) {
+                    localStorage.setItem("authToken", response.data.token);
+                }
+
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = "/dashboard";
+                }, 500);
+            }
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : "Login failed";
+
+            // Check if error is about email verification
+            if (errorMsg.toLowerCase().includes("verify") && errorMsg.toLowerCase().includes("email")) {
+                // Route to email verification page
+                setTimeout(() => {
+                    window.location.href = `/auth/verify?email=${encodeURIComponent(email)}`;
+                }, 500);
+                return;
+            }
+
+            setErrors({ submit: errorMsg });
+            console.error("Login error:", error);
+        } finally {
             setIsLoading(false);
-            // Uncomment when you have real auth:
-            // window.location.href = "/dashboard";
-        }, 1000);
+        }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             {/* Email Field */}
             <div>
                 <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -45,13 +93,16 @@ export default function LoginForm() {
                 </label>
                 <input
                     id="email"
+                    name="email"
                     type="email"
+                    inputMode="email"
+                    autoComplete="username"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.email
                         ? "border-red-500 focus:ring-red-500 bg-red-50/30"
-                        : "border-purple-200 focus:ring-purple-500 focus:border-purple-500 bg-purple-50/30 hover:border-purple-300"
+                        : "border-purple-200 focus:ring-purple-500 focus:border-purple-500 bg-purple-50/30 hover:border-purple-300 text-black"
                         }`}
                     disabled={isLoading}
                 />
@@ -71,13 +122,15 @@ export default function LoginForm() {
                 <div className="relative">
                     <input
                         id="password"
+                        name="password"
                         type={showPassword ? "text" : "password"}
+                        autoComplete="new-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
                         className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 transition-all ${errors.password
                             ? "border-red-500 focus:ring-red-500 bg-red-50/30"
-                            : "border-purple-200 focus:ring-purple-500 focus:border-purple-500 bg-purple-50/30 hover:border-purple-300"
+                            : "border-purple-200 focus:ring-purple-500 focus:border-purple-500 bg-purple-50/30 hover:border-purple-300 text-black"
                             }`}
                         disabled={isLoading}
                     />
@@ -104,9 +157,10 @@ export default function LoginForm() {
             <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-linear-to-r from-purple-600 to-amber-500 hover:from-purple-700 hover:to-amber-600 disabled:from-purple-400 disabled:to-amber-400 text-white font-bold py-3 rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg mt-2"
+                className="w-full inline-flex items-center justify-center gap-3 bg-linear-to-r from-purple-600 to-amber-500 hover:from-purple-700 hover:to-amber-600 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg mt-2"
             >
-                {isLoading ? "✨ Entering..." : "✨ Enter Your Library"}
+                {isLoading && <Spinner size={16} />}
+                <span>{isLoading ? "✨ Entering..." : "✨ Enter Your Library"}</span>
             </button>
         </form>
     );
