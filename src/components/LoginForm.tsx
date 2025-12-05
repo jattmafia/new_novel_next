@@ -60,10 +60,19 @@ export default function LoginForm() {
                     localStorage.setItem("authToken", response.data.token);
                 }
 
-                // Redirect to dashboard
-                setTimeout(() => {
-                    window.location.href = "/dashboard";
-                }, 500);
+                // Persist username and redirect to their profile path
+                const username = response.data?.profile?.username;
+                if (username) {
+                    try {
+                        localStorage.setItem("webnovelUsername", username);
+                    } catch (e) {
+                        // ignore
+                    }
+                    setTimeout(() => {
+                        window.location.href = `/${encodeURIComponent(username)}`;
+                    }, 500);
+                    return;
+                }
             }
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : "Login failed";

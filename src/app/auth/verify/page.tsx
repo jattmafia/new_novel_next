@@ -4,13 +4,17 @@ import React, { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Spinner from "@/components/Spinner";
+import AuthRedirectGuard from "@/components/AuthRedirectGuard";
 import { resendVerification } from "@/lib/authService";
 
 export default function VerifyEmailPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
-            <VerifyContent />
-        </Suspense>
+        <>
+            <AuthRedirectGuard />
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+                <VerifyContent />
+            </Suspense>
+        </>
     );
 }
 

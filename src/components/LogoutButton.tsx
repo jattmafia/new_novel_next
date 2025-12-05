@@ -8,6 +8,7 @@ export default function LogoutButton() {
     const handleLogout = () => {
         try {
             localStorage.removeItem("authToken");
+            localStorage.removeItem("webnovelUsername");
         } catch (e) {
             // ignore
         }

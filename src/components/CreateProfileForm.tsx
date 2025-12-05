@@ -159,15 +159,22 @@ export default function CreateProfileForm() {
             if (response.success) {
                 alert(`🎉 Profile created! Welcome @${username}!`);
 
+                // Persist username for client-side guards
+                try {
+                    localStorage.setItem("webnovelUsername", username);
+                } catch (e) {
+                    // ignore
+                }
+
                 // Reset form
                 setUsername("");
                 setBio("");
                 setProfilePicturePreview(null);
                 setProfilePictureFile(null);
 
-                // Redirect to dashboard
+                // Redirect to their profile path
                 setTimeout(() => {
-                    window.location.href = "/dashboard";
+                    window.location.href = `/${encodeURIComponent(username)}`;
                 }, 500);
             }
         } catch (error) {
