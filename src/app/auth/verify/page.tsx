@@ -1,12 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Spinner from "@/components/Spinner";
 import { resendVerification } from "@/lib/authService";
 
 export default function VerifyEmailPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+            <VerifyContent />
+        </Suspense>
+    );
+}
+
+function VerifyContent() {
     const searchParams = useSearchParams();
     const email = searchParams?.get("email") || "";
     const [resendStatus, setResendStatus] = useState("");

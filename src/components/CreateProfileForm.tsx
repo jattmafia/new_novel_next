@@ -8,7 +8,8 @@ import Spinner from "@/components/Spinner";
 export default function CreateProfileForm() {
     const [username, setUsername] = useState("");
     const [bio, setBio] = useState("");
-    const [profilePicture, setProfilePicture] = useState<string | null>(null);
+    const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
+    const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [isLoading, setIsLoading] = useState(false);
     const [usernameStatus, setUsernameStatus] = useState<"" | "checking" | "available" | "taken" | "invalid">("");
@@ -87,14 +88,16 @@ export default function CreateProfileForm() {
         // Create preview URL
         const reader = new FileReader();
         reader.onloadend = () => {
-            setProfilePicture(reader.result as string);
+            setProfilePicturePreview(reader.result as string);
             setErrors({ ...errors, image: "" });
         };
         reader.readAsDataURL(file);
+        setProfilePictureFile(file);
     };
 
     const removeImage = () => {
-        setProfilePicture(null);
+        setProfilePicturePreview(null);
+        setProfilePictureFile(null);
     };
 
     const validateForm = () => {
@@ -120,7 +123,7 @@ export default function CreateProfileForm() {
             newErrors.bio = "Bio must be less than 200 characters";
         }
 
-        if (!profilePicture) {
+        if (!profilePicturePreview) {
             newErrors.image = "Profile picture is required";
         }
 
@@ -151,7 +154,7 @@ export default function CreateProfileForm() {
             }
 
             // Call backend API
-            const response = await createProfile(username, bio, profilePicture!, token);
+            const response = await createProfile(username, bio, profilePictureFile, token);
 
             if (response.success) {
                 alert(`🎉 Profile created! Welcome @${username}!`);
@@ -159,7 +162,8 @@ export default function CreateProfileForm() {
                 // Reset form
                 setUsername("");
                 setBio("");
-                setProfilePicture(null);
+                setProfilePicturePreview(null);
+                setProfilePictureFile(null);
 
                 // Redirect to dashboard
                 setTimeout(() => {
@@ -183,11 +187,11 @@ export default function CreateProfileForm() {
                 </label>
 
                 <div className="relative">
-                    {profilePicture ? (
+                    {profilePicturePreview ? (
                         <div className="relative">
                             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-purple-200 shadow-lg">
                                 <Image
-                                    src={profilePicture}
+                                    src={profilePicturePreview}
                                     alt="Profile preview"
                                     width={128}
                                     height={128}
@@ -240,12 +244,12 @@ export default function CreateProfileForm() {
                         onChange={(e) => setUsername(e.target.value)}
                         placeholder="yourname"
                         className={`w-full pl-8 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 transition-all text-black ${errors.username
-                                ? "border-red-500 focus:ring-red-500 bg-red-50/30"
-                                : usernameStatus === "available"
-                                    ? "border-emerald-500 focus:ring-emerald-500 bg-emerald-50/30"
-                                    : usernameStatus === "taken"
-                                        ? "border-orange-500 focus:ring-orange-500 bg-orange-50/30"
-                                        : "border-purple-200 focus:ring-purple-500 focus:border-purple-500 bg-purple-50/30 hover:border-purple-300"
+                            ? "border-red-500 focus:ring-red-500 bg-red-50/30"
+                            : usernameStatus === "available"
+                                ? "border-emerald-500 focus:ring-emerald-500 bg-emerald-50/30"
+                                : usernameStatus === "taken"
+                                    ? "border-orange-500 focus:ring-orange-500 bg-orange-50/30"
+                                    : "border-purple-200 focus:ring-purple-500 focus:border-purple-500 bg-purple-50/30 hover:border-purple-300"
                             }`}
                         disabled={isLoading}
                         maxLength={20}

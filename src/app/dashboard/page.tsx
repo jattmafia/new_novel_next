@@ -1,3 +1,5 @@
+import LogoutButton from "@/components/LogoutButton";
+
 export default function DashboardPage() {
     return (
         <main className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-amber-950 relative overflow-hidden">
@@ -20,15 +22,10 @@ export default function DashboardPage() {
                                 </h1>
                                 <p className="text-gray-400 text-sm mt-1">Your story reading companion</p>
                             </div>
-                            <button
-                                onClick={() => {
-                                    localStorage.removeItem("authToken");
-                                    window.location.href = "/login";
-                                }}
-                                className="px-6 py-2 bg-red-600/80 hover:bg-red-700 text-white rounded-lg transition-colors backdrop-blur-sm"
-                            >
-                                Logout
-                            </button>
+                            {/* Logout handled by client component to avoid passing event handlers from server */}
+                            <div>
+                                <LogoutButton />
+                            </div>
                         </div>
                     </div>
                 </header>

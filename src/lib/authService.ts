@@ -184,22 +184,24 @@ export const resendVerification = async (email: string): Promise<{ message?: str
 export const createProfile = async (
     username: string,
     bio: string,
-    profilePicture: string,
+    profilePicture: File | null,
     token: string
 ): Promise<AuthResponse> => {
     try {
-        const url = typeof window === "undefined" ? `${API_BASE_URL}/profile/create` : `/api/profile/create`;
+        const url = typeof window === "undefined" ? `${API_BASE_URL}/profile/update` : `/api/profile/update`;
+        const formData = new FormData();
+        formData.append("username", username);
+        formData.append("bio", bio);
+        if (profilePicture) {
+            formData.append("profilePicture", profilePicture);
+        }
+
         const response = await fetch(url, {
-            method: "POST",
+            method: "PUT",
             headers: {
-                "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`,
             },
-            body: JSON.stringify({
-                username,
-                bio,
-                profilePicture,
-            }),
+            body: formData,
         });
 
         let data: any = {};
