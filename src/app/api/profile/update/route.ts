@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://209.74.81.116/api";
+import { API_BASE } from "@/lib/config";
 
 async function fetchWithTimeout(url: string, opts: any, timeout = 15000) {
     const controller = new AbortController();
