@@ -16,6 +16,13 @@ export default function LoginForm() {
         e.preventDefault();
         setIsLoading(true);
 
+        const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN;
+        const proto = window.location.protocol;
+        const port = window.location.port ? `:${window.location.port}` : "";
+        const buildProfileUrl = (u: string) =>
+            APP_DOMAIN ? `${proto}//${encodeURIComponent(u)}.${APP_DOMAIN}${port}` : `/${encodeURIComponent(u)}`;
+        const createProfileUrl = () => (APP_DOMAIN ? `${proto}//${APP_DOMAIN}${port}/auth/create-profile` : "/auth/create-profile");
+
         // Validate form
         const validation = validateLoginForm(email, password);
         if (!validation.valid) {
@@ -48,7 +55,7 @@ export default function LoginForm() {
                     }
                     // Route to create profile page
                     setTimeout(() => {
-                        window.location.href = "/auth/create-profile";
+                        window.location.href = createProfileUrl();
                     }, 500);
                     return;
                 }
@@ -69,7 +76,7 @@ export default function LoginForm() {
                         // ignore
                     }
                     setTimeout(() => {
-                        window.location.href = `/${encodeURIComponent(username)}`;
+                        window.location.href = buildProfileUrl(username);
                     }, 500);
                     return;
                 }

@@ -9,20 +9,37 @@ export default function AuthRedirectGuard() {
             if (!token) return;
 
             const username = localStorage.getItem("webnovelUsername");
-            const destination = username ? `/${encodeURIComponent(username)}` : "/auth/create-profile";
+            const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN;
+            const proto = window.location.protocol;
 
-            // Avoid redirect loops and unnecessary replaces
-            if (window.location.pathname === destination) return;
+            const buildProfileUrl = (u: string) =>
+                APP_DOMAIN
+                    ? `${proto}//${encodeURIComponent(u)}.${APP_DOMAIN}${window.location.port ? `:${window.location.port}` : ""}`
+                    : `/${encodeURIComponent(u)}`;
+            const buildCreateProfileUrl = () =>
+                APP_DOMAIN ? `${proto}//${APP_DOMAIN}${window.location.port ? `:${window.location.port}` : ""}/auth/create-profile` : "/auth/create-profile";
 
-            // If user is already visiting allowed auth pages and has no username, go to create-profile
+            const destination = username ? buildProfileUrl(username) : buildCreateProfileUrl();
+
+            const normalizeHref = (href: string) => {
+                try {
+                    const url = new URL(href, window.location.href);
+                    return url.href.replace(/\/+$/, "");
+                } catch {
+                    return href.replace(/\/+$/, "");
+                }
+            };
+
+            const current = window.location.href.replace(/\/+$/, "");
+            const destNormalized = normalizeHref(destination);
+            if (current === destNormalized) return;
+
             const allowedAuthPages = ["/login", "/signup", "/auth/create-profile", "/auth/verify"];
-            // If on an allowed page but destination differs, redirect to destination
             if (allowedAuthPages.includes(window.location.pathname) || window.location.pathname === "/") {
                 window.location.replace(destination);
                 return;
             }
 
-            // For any other public page, if they have a username and token, send them to their profile path
             window.location.replace(destination);
         } catch (e) {
             // ignore errors reading localStorage

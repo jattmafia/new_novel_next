@@ -12,7 +12,17 @@ export default function LogoutButton() {
         } catch (e) {
             // ignore
         }
-        // Redirect to login
+        // Redirect to base-domain login (preserve protocol and port in dev when NEXT_PUBLIC_APP_DOMAIN is set)
+        const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN;
+        if (APP_DOMAIN) {
+            const proto = window.location.protocol;
+            const port = window.location.port ? `:${window.location.port}` : "";
+            // Use window.location to perform a full-domain navigation
+            window.location.href = `${proto}//${APP_DOMAIN}${port}/login`;
+            return;
+        }
+
+        // Fallback: client-side push to /login on current domain
         router.push("/login");
     };
 
