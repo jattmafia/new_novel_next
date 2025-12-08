@@ -1,6 +1,6 @@
 import AuthRedirectGuard from "@/components/AuthRedirectGuard";
 
-export default function Home(): JSX.Element {
+export default function Home() {
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
       {/* Animated gradient orbs - premium effect */}
