@@ -7,23 +7,26 @@ export default function LogoutButton() {
 
     const handleLogout = () => {
         try {
+            // Clear local storage on current domain (e.g. subdomain) immediately
             localStorage.removeItem("authToken");
             localStorage.removeItem("webnovelUsername");
         } catch (e) {
             // ignore
         }
-        // Redirect to base-domain login (preserve protocol and port in dev when NEXT_PUBLIC_APP_DOMAIN is set)
-        const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN;
-        if (APP_DOMAIN) {
-            const proto = window.location.protocol;
-            const port = window.location.port ? `:${window.location.port}` : "";
-            // Use window.location to perform a full-domain navigation
-            window.location.href = `${proto}//${APP_DOMAIN}${port}/login`;
-            return;
-        }
 
-        // Fallback: client-side push to /login on current domain
-        router.push("/login");
+        // Redirect to base-domain logout route which will clear root domain storage
+        const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN;
+        const proto = window.location.protocol;
+        const port = window.location.port ? `:${window.location.port}` : "";
+
+        if (APP_DOMAIN) {
+            // Full URL redirect to ensure we hit the root domain
+            // Middleware will force /auth/* to root domain anyway, but being explicit is good
+            window.location.href = `${proto}//${APP_DOMAIN}${port}/auth/logout`;
+        } else {
+            // Fallback for simple local dev without configured domain
+            window.location.href = "/auth/logout";
+        }
     };
 
     return (

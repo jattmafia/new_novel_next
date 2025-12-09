@@ -1,49 +1,72 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
-    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN;
-    if (!appDomain) return NextResponse.next();
+    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || "localhost";
 
-    const hostname = request.nextUrl.hostname; // excludes port
+    // Get hostname from headers for reliability, fallback to nextUrl
+    const hostHeader = request.headers.get("host") || "";
+    const hostname = hostHeader.split(":")[0] || request.nextUrl.hostname;
 
-    // Allow local and bare domain to pass through
-    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === appDomain) {
+    console.log(`[Middleware] ${request.method} ${request.url} | Host: ${hostname} | AppDomain: ${appDomain}`);
+
+    // 1. Skip if current hostname matches the appDomain (Root Domain)
+    if (hostname === appDomain || hostname === "localhost" || hostname === "127.0.0.1") {
         return NextResponse.next();
     }
 
-    if (hostname.endsWith(appDomain)) {
-        const suffix = `.${appDomain}`;
-        const subdomain = hostname.slice(0, hostname.length - suffix.length);
+    // 2. Check for subdomain
+    // We expect hostname to end with .appDomain
+    // e.g. "user.localhost" ends with ".localhost"
+    // OR if appDomain is "rowllr.com", "user.rowllr.com" ends with ".rowllr.com"
+    const isSubdomain = hostname.endsWith(`.${appDomain}`);
 
-        // Skip reserved or empty subdomains
-        if (!subdomain || ["www", "app", "api"].includes(subdomain)) {
+    if (isSubdomain) {
+        // Extract subdomain
+        const subdomain = hostname.slice(0, -1 * (appDomain.length + 1)); // remove .appDomain
+        console.log(`[Middleware] Subdomain detected: ${subdomain}`);
+
+        // Validate subdomain
+        if (!subdomain || ["www", "app", "api", "auth"].includes(subdomain)) {
+            console.log(`[Middleware] Skipping reserved subdomain: ${subdomain}`);
             return NextResponse.next();
         }
 
         const url = request.nextUrl.clone();
 
-        // Only rewrite the root of the subdomain to the user's profile page.
-        // e.g. https://alice.localhost:3000/ -> /alice
-        if (url.pathname === "/" || url.pathname === "") {
-            url.pathname = `/${encodeURIComponent(subdomain)}`;
+        // 3. Handle Auth redirects (Login/Signup should be on Root Domain)
+        const isAuthPath = url.pathname.startsWith("/login") ||
+            url.pathname.startsWith("/signup") ||
+            url.pathname.startsWith("/auth");
+
+        if (isAuthPath) {
+            console.log(`[Middleware] Redirecting auth path ${url.pathname} to root domain`);
+            const dest = new URL(url.pathname, `http://${appDomain}:${url.port || ""}`);
+            if (url.search) dest.search = url.search;
+            return NextResponse.redirect(dest);
+        }
+
+        // 4. Rewrite logic for Subdomain
+        // If it's the root path "/", rewrite to "/[username]"
+        if (url.pathname === "/") {
+            console.log(`[Middleware] Rewriting / to /${subdomain}`);
+            url.pathname = `/${subdomain}`;
             return NextResponse.rewrite(url);
         }
 
-        // If the subdomain request is to an auth/login/signup path, redirect to the base domain
-        // so login/signup live only on the root domain (no subdomain auth pages).
-        const authPrefixes = ["/login", "/signup", "/auth"];
-        for (const prefix of authPrefixes) {
-            if (url.pathname.startsWith(prefix)) {
-                // Build destination URL on the base domain (preserve protocol, port, pathname, and search)
-                const dest = new URL(request.url);
-                dest.hostname = appDomain;
-                // Preserve port when present (dev mode)
-                if (request.nextUrl.port) dest.port = request.nextUrl.port;
-                return NextResponse.redirect(dest);
-            }
-        }
+        // 5. Allow other paths (e.g. /[username]/post/1) to work gracefully?
+        // If I visit "user.domain.com/some-post", we might want to rewrite to "/user/some-post"
+        // But the current app structure is /src/app/[username]/... ? 
+        // If the structure is SINGLE profile page, we might not need this.
+        // Assuming the file is `src/app/[username]/page.tsx`, accessing `/` works.
+        // If there are sub-routes like `src/app/[username]/stories`, we should handle them.
 
-        // For any other pathname (e.g. /about, /posts/123), do not rewrite — let the app handle the path normally.
+        // For now, let's try to rewrite EVERYTHING to include the username if the path doesn't already have it?
+        // No, `NextResponse.rewrite` keeps the URL in the browser bar but renders the target path.
+        // If I visit `user.com/story`, I want to render `/user/story`.
+
+        // Let's stick to the user's specific complaint: "showing landing page".
+        // This usually means `rewrite` didn't happen for `/`.
+
         return NextResponse.next();
     }
 

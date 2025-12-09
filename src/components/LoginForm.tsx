@@ -76,7 +76,10 @@ export default function LoginForm() {
                         // ignore
                     }
                     setTimeout(() => {
-                        window.location.href = buildProfileUrl(username);
+                        // Pass token and username to allow session sync on the subdomain
+                        const targetUrl = buildProfileUrl(username);
+                        const sep = targetUrl.includes("?") ? "&" : "?";
+                        window.location.href = `${targetUrl}${sep}s_token=${encodeURIComponent(response.data?.token || "")}&s_user=${encodeURIComponent(username)}`;
                     }, 500);
                     return;
                 }
