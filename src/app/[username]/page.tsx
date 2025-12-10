@@ -1,6 +1,9 @@
 import Image from "next/image";
 import ProfileOwnerView from "../../components/ProfileOwnerView";
 import LogoutButton from "../../components/LogoutButton";
+import NewChapterModal from "../../components/NewChapterModal";
+import NewStoryModal from "../../components/NewStoryModal";
+import { API_BASE, imageUrl } from '@/lib/config';
 
 interface Props {
     params: { username: string } | Promise<{ username: string }>;
@@ -9,6 +12,44 @@ interface Props {
 export default async function UserProfilePage({ params }: Props) {
     const resolvedParams = await params;
     const username = resolvedParams?.username ?? "";
+
+    // Fetch author's stories from external API via API_BASE so the server-rendered
+    // profile shows up-to-date content after creating a story.
+    let storiesList: any[] = [];
+    try {
+        // First try to resolve the username 
+        // to an author id via our profile proxy.
+        let authorId: string | null = null;
+        try {
+            const profileResp = await fetch(`/api/profile/check-username?username=${encodeURIComponent(username)}`);
+            if (profileResp.ok) {
+                const pdata = await profileResp.json().catch(() => null);
+                // common id fields that backend might return
+                authorId = pdata?.id || pdata?._id || pdata?.authorId || pdata?.userId || null;
+            }
+        } catch (e) {
+            authorId = null;
+        }
+
+        // If we have an authorId, prefer the author-based stories endpoint; otherwise fall back to username-based.
+        const storiesUrl = authorId
+            ? `${API_BASE}/stories/author/${encodeURIComponent(authorId)}?page=1&limit=12`
+            : `${API_BASE}/stories/user/${encodeURIComponent(username)}?page=1&limit=12`;
+
+        const res = await fetch(storiesUrl);
+        const json = await res.json().catch(() => null);
+        if (json) {
+            if (Array.isArray(json)) storiesList = json;
+            else if (Array.isArray(json.data)) storiesList = json.data;
+            else if (Array.isArray(json.items)) storiesList = json.items;
+            else if (Array.isArray(json.stories)) storiesList = json.stories;
+            else if (Array.isArray(json.results)) storiesList = json.results;
+        }
+    } catch (e) {
+        // ignore errors; we'll render empty state
+        storiesList = [];
+    }
+    const storiesCount = storiesList.length;
 
     return (
         <main className="min-h-screen bg-white text-slate-900">
@@ -60,7 +101,7 @@ export default async function UserProfilePage({ params }: Props) {
                         {/* Stats */}
                         <div className="flex gap-8">
                             <div className="group cursor-default">
-                                <p className="text-3xl font-bold bg-linear-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent group-hover:from-purple-500 group-hover:to-amber-500 transition-all">0</p>
+                                <p className="text-3xl font-bold bg-linear-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent group-hover:from-purple-500 group-hover:to-amber-500 transition-all">{storiesCount}</p>
                                 <p className="text-sm text-slate-500 mt-1">Stories</p>
                             </div>
                             <div className="group cursor-default">
@@ -76,12 +117,13 @@ export default async function UserProfilePage({ params }: Props) {
                         {/* CTA Buttons */}
                         <div className="flex gap-3 pt-4">
                             <ProfileOwnerView username={username}>
-                                <button className="px-6 py-2.5 bg-linear-to-r from-purple-600 to-amber-500 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-purple-500/30 transition-all hover:scale-105 text-sm">
-                                    New Story
-                                </button>
-                                <button className="px-6 py-2.5 border-2 border-purple-300 text-purple-600 rounded-lg font-semibold hover:bg-purple-50 hover:border-purple-400 transition-all text-sm">
-                                    Manage
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    <NewStoryModal />
+                                    <NewChapterModal />
+                                    <button className="px-6 py-2.5 border-2 border-purple-300 text-purple-600 rounded-lg font-semibold hover:bg-purple-50 hover:border-purple-400 transition-all text-sm">
+                                        Manage
+                                    </button>
+                                </div>
                             </ProfileOwnerView>
                             <ProfileOwnerView username={username}>
                                 <>
@@ -111,15 +153,32 @@ export default async function UserProfilePage({ params }: Props) {
                         <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">NEW</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {/* Empty State */}
-                        <div className="md:col-span-2 lg:col-span-3 py-20 text-center border-2 border-dashed border-purple-200 rounded-2xl bg-purple-50/50 hover:border-purple-300 hover:bg-purple-50 transition-all">
-                            <p className="text-slate-600 mb-6 text-lg font-medium">No stories published yet</p>
-                            <ProfileOwnerView username={username}>
-                                <button className="px-6 py-2.5 bg-linear-to-r from-purple-600 to-amber-500 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-purple-500/30 transition-all hover:scale-105 text-sm">
-                                    Publish Your First Story
-                                </button>
-                            </ProfileOwnerView>
-                        </div>
+                        {storiesList.length > 0 ? (
+                            storiesList.map((s: any) => (
+                                <div key={s.id || s._id || s.slug || s.title} className="bg-white rounded-lg p-4 shadow-sm">
+                                    {s.coverImage || s.cover || s.image ? (
+                                        <div className="mb-3 h-44 w-full relative rounded-md overflow-hidden bg-slate-100">
+                                            <Image src={imageUrl(s.coverImage || s.cover || s.image) || '/logo.png'} alt={s.title || 'cover'} fill style={{ objectFit: 'cover' }} />
+                                        </div>
+                                    ) : null}
+                                    <h3 className="text-lg font-semibold mb-1">{s.title}</h3>
+                                    <p className="text-sm text-slate-600 mb-3">{s.description ?? s.summary ?? ''}</p>
+                                    <div className="flex items-center justify-between">
+                                        <a href={`#`} className="text-sm text-purple-600 font-semibold">View</a>
+                                        <span className="text-xs text-slate-500">{s.chapterCount ? `${s.chapterCount} chapters` : ''}</span>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="md:col-span-2 lg:col-span-3 py-20 text-center border-2 border-dashed border-purple-200 rounded-2xl bg-purple-50/50 hover:border-purple-300 hover:bg-purple-50 transition-all">
+                                <p className="text-slate-600 mb-6 text-lg font-medium">No stories published yet</p>
+                                <ProfileOwnerView username={username}>
+                                    <div className="flex items-center justify-center">
+                                        <NewStoryModal />
+                                    </div>
+                                </ProfileOwnerView>
+                            </div>
+                        )}
                     </div>
                 </div>
 
