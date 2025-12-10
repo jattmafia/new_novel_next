@@ -1,7 +1,8 @@
 import { API_BASE } from '@/lib/config';
 
-export async function POST(request: Request, { params }: { params: { storyId: string } }) {
-    const { storyId } = params;
+export async function POST(request: Request, context: any) {
+    const params = context?.params instanceof Promise ? await context.params : context?.params;
+    const { storyId } = params ?? {};
     try {
         const formData = await request.formData();
         const auth = request.headers.get('authorization') || '';

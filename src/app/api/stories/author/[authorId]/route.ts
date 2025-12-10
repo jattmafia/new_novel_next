@@ -1,7 +1,8 @@
 import { API_BASE } from '@/lib/config';
 
-export async function GET(request: Request, { params }: { params: { authorId: string } }) {
-    const { authorId } = params;
+export async function GET(request: Request, context: any) {
+    const params = context?.params instanceof Promise ? await context.params : context?.params;
+    const { authorId } = params ?? {};
     try {
         const url = new URL(request.url);
         const qs = url.search || '';
