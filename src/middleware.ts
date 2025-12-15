@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Static file extensions that should NOT be rewritten
+const STATIC_FILE_EXTENSIONS = /\.(png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot|css|js|json|mp4|webm|ogg|mp3|wav)$/i;
+
 export function middleware(request: NextRequest) {
     const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || "localhost";
 
     // Get hostname from headers for reliability, fallback to nextUrl
     const hostHeader = request.headers.get("host") || "";
     const hostname = hostHeader.split(":")[0] || request.nextUrl.hostname;
+    const pathname = request.nextUrl.pathname;
+
+    // Skip static files - check if pathname has a file extension
+    const hasFileExtension = pathname.includes('.') && pathname.split('/').pop()?.includes('.');
+    if (hasFileExtension) {
+        console.log(`[Middleware] Skipping static file: ${pathname}`);
+        return NextResponse.next();
+    }
 
     console.log(`[Middleware] ${request.method} ${request.url} | Host: ${hostname} | AppDomain: ${appDomain}`);
 
@@ -46,33 +57,25 @@ export function middleware(request: NextRequest) {
         }
 
         // 4. Rewrite logic for Subdomain
-        // If it's the root path "/", rewrite to "/[username]"
-        if (url.pathname === "/") {
-            console.log(`[Middleware] Rewriting / to /${subdomain}`);
-            url.pathname = `/${subdomain}`;
-            return NextResponse.rewrite(url);
-        }
-
-        // 5. Allow other paths (e.g. /[username]/post/1) to work gracefully?
-        // If I visit "user.domain.com/some-post", we might want to rewrite to "/user/some-post"
-        // But the current app structure is /src/app/[username]/... ? 
-        // If the structure is SINGLE profile page, we might not need this.
-        // Assuming the file is `src/app/[username]/page.tsx`, accessing `/` works.
-        // If there are sub-routes like `src/app/[username]/stories`, we should handle them.
-
-        // For now, let's try to rewrite EVERYTHING to include the username if the path doesn't already have it?
-        // No, `NextResponse.rewrite` keeps the URL in the browser bar but renders the target path.
-        // If I visit `user.com/story`, I want to render `/user/story`.
-
-        // Let's stick to the user's specific complaint: "showing landing page".
-        // This usually means `rewrite` didn't happen for `/`.
-
-        return NextResponse.next();
+        // Rewrite ALL paths to include the subdomain as username prefix
+        // e.g., /discover on user.localhost becomes /user/discover
+        // e.g., / on user.localhost becomes /user
+        console.log(`[Middleware] Rewriting ${url.pathname} to /${subdomain}${url.pathname === '/' ? '' : url.pathname}`);
+        url.pathname = `/${subdomain}${url.pathname === '/' ? '' : url.pathname}`;
+        return NextResponse.rewrite(url);
     }
 
     return NextResponse.next();
 }
 
 export const config = {
-    matcher: "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|_next/data).*)",
+    matcher: [
+        /*
+         * Match all paths except:
+         * - api routes
+         * - _next (static files, images, data)
+         * - Static files with common extensions
+         */
+        "/((?!api|_next|favicon.ico|sitemap.xml|robots.txt|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.svg|.*\\.ico|.*\\.webp|.*\\.css|.*\\.js|.*\\.woff|.*\\.woff2).*)",
+    ],
 };

@@ -2,10 +2,12 @@
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSessionSync } from "@/lib/SessionContext";
 
 export default function SessionSyncer() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { markSessionSynced } = useSessionSync();
 
     useEffect(() => {
         const syncToken = searchParams.get("s_token");
@@ -16,6 +18,9 @@ export default function SessionSyncer() {
                 localStorage.setItem("authToken", syncToken);
                 localStorage.setItem("webnovelUsername", syncUser);
 
+                // Mark session as synced before cleaning URL
+                markSessionSynced();
+
                 // Clean URL
                 const newUrl = new URL(window.location.href);
                 newUrl.searchParams.delete("s_token");
@@ -24,9 +29,14 @@ export default function SessionSyncer() {
                 router.replace(newUrl.pathname + newUrl.search);
             } catch (e) {
                 console.error("Session sync failed", e);
+                // Mark as synced even on error to prevent infinite waiting
+                markSessionSynced();
             }
+        } else {
+            // No session params to sync, mark as ready immediately
+            markSessionSynced();
         }
-    }, [searchParams, router]);
+    }, [searchParams, router, markSessionSynced]);
 
     return null;
 }

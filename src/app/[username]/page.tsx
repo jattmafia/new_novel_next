@@ -1,33 +1,86 @@
 import Image from "next/image";
+import { Metadata } from "next";
 import ProfileOwnerView from "../../components/ProfileOwnerView";
 import LogoutButton from "../../components/LogoutButton";
 import NewChapterModal from "../../components/NewChapterModal";
 import NewStoryModal from "../../components/NewStoryModal";
+import UserNotFound from "../../components/UserNotFound";
 import { API_BASE, imageUrl } from '@/lib/config';
 
 interface Props {
     params: { username: string } | Promise<{ username: string }>;
 }
 
+// Dynamic metadata for browser tab title
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+    const resolvedParams = await params;
+    const username = resolvedParams?.username ?? "";
+
+    // Check if user exists
+    try {
+        const storiesUrl = `${API_BASE}/stories/user/${encodeURIComponent(username)}?page=1&limit=1`;
+        const res = await fetch(storiesUrl);
+
+        if (res.status === 404) {
+            return {
+                title: `User Not Found | Rowllr`,
+                description: `The user @${username} was not found on Rowllr`,
+                icons: { icon: "/logo.png" },
+            };
+        }
+
+        const json = await res.json().catch(() => null);
+        if (!json?.author) {
+            return {
+                title: `User Not Found | Rowllr`,
+                description: `The user @${username} was not found on Rowllr`,
+                icons: { icon: "/logo.png" },
+            };
+        }
+
+        // User exists - use their name if available
+        const displayName = json.author.name || username;
+        return {
+            title: `${displayName} | Rowllr`,
+            description: json.author.bio || `Check out ${displayName}'s stories on Rowllr`,
+            icons: { icon: "/logo.png" },
+        };
+    } catch {
+        return {
+            title: `@${username} | Rowllr`,
+            description: `Check out ${username}'s stories on Rowllr`,
+            icons: { icon: "/logo.png" },
+        };
+    }
+}
+
+
 export default async function UserProfilePage({ params }: Props) {
     const resolvedParams = await params;
     const username = resolvedParams?.username ?? "";
 
+    console.log(`[UserProfilePage] Rendering for username: ${username}`);
+
     // Fetch author's stories from external API via API_BASE so the server-rendered
     // profile shows up-to-date content after creating a story.
     let storiesList: any[] = [];
+    let authorData: any = null;
+    let userExists = false;
+
     try {
         // First try to resolve the username 
         // to an author id via our profile proxy.
         let authorId: string | null = null;
         try {
-            const profileResp = await fetch(`/api/profile/check-username?username=${encodeURIComponent(username)}`);
+            const profileUrl = `/api/profile/check-username?username=${encodeURIComponent(username)}`;
+            const profileResp = await fetch(`http://localhost:3000${profileUrl}`);
             if (profileResp.ok) {
                 const pdata = await profileResp.json().catch(() => null);
                 // common id fields that backend might return
                 authorId = pdata?.id || pdata?._id || pdata?.authorId || pdata?.userId || null;
             }
         } catch (e) {
+            console.log(`[UserProfilePage] Profile fetch error:`, e);
             authorId = null;
         }
 
@@ -37,7 +90,20 @@ export default async function UserProfilePage({ params }: Props) {
             : `${API_BASE}/stories/user/${encodeURIComponent(username)}?page=1&limit=12`;
 
         const res = await fetch(storiesUrl);
+
+        // If 404, user doesn't exist
+        if (res.status === 404) {
+            return <UserNotFound username={username} />;
+        }
+
         const json = await res.json().catch(() => null);
+
+        // Check if author data exists in response
+        if (json?.author) {
+            authorData = json.author;
+            userExists = true;
+        }
+
         if (json) {
             if (Array.isArray(json)) storiesList = json;
             else if (Array.isArray(json.data)) storiesList = json.data;
@@ -46,21 +112,31 @@ export default async function UserProfilePage({ params }: Props) {
             else if (Array.isArray(json.results)) storiesList = json.results;
         }
     } catch (e) {
-        // ignore errors; we'll render empty state
-        storiesList = [];
+        console.log(`[UserProfilePage] Error fetching data:`, e);
+        // On error, show user not found
+        return <UserNotFound username={username} />;
     }
+
+    // If no author data was found, show user not found
+    if (!userExists) {
+        return <UserNotFound username={username} />;
+    }
+
     const storiesCount = storiesList.length;
 
     return (
+
         <main className="min-h-screen bg-white text-slate-900">
 
             {/* Header/Navigation */}
             <header className="border-b border-purple-100 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
                 <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
                     <a href="/" className="group flex items-center gap-2 hover:opacity-70 transition-opacity">
-                        <div className="w-8 h-8 rounded-lg bg-linear-to-br from-purple-600 to-amber-500 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-purple-500/20">
-                            R
-                        </div>
+                        <img
+                            src="/logo.png"
+                            alt="Rowllr"
+                            className="w-8 h-8 rounded-lg shadow-lg shadow-purple-500/20"
+                        />
                         <div className="hidden sm:block">
                             <span className="text-sm font-bold bg-linear-to-r from-purple-600 to-amber-600 bg-clip-text text-transparent">Rowllr</span>
                         </div>

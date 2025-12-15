@@ -2,12 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSessionSync } from "@/lib/SessionContext";
 
 export default function ProfileOwnerDetector({ username }: { username: string }) {
     const [isOwner, setIsOwner] = useState<boolean | null>(null);
     const router = useRouter();
+    const { isSessionSynced } = useSessionSync();
 
     useEffect(() => {
+        // Only check ownership after session has been synced
+        if (!isSessionSynced) return;
+
         try {
             const token = localStorage.getItem("authToken");
             const stored = localStorage.getItem("webnovelUsername");
@@ -23,7 +28,7 @@ export default function ProfileOwnerDetector({ username }: { username: string })
         } catch (e) {
             setIsOwner(false);
         }
-    }, [username]);
+    }, [username, isSessionSynced]);
 
     if (isOwner === null) return null;
 
