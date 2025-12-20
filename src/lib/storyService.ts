@@ -4,6 +4,8 @@ export async function createChapter(storyId: string, data: {
     chapterNumber?: number | string;
     isDraft?: boolean;
     image?: File | null;
+    accessType?: 'free' | 'paid' | 'followers';
+    price?: number;
 }) {
     if (!storyId) throw new Error('storyId is required');
 
@@ -11,23 +13,39 @@ export async function createChapter(storyId: string, data: {
     formData.append('title', data.title ?? 'Untitled');
     formData.append('content', data.content ?? '');
     if (data.chapterNumber !== undefined && data.chapterNumber !== null) formData.append('chapterNumber', String(data.chapterNumber));
-    formData.append('isDraft', data.isDraft ? 'true' : 'false');
-    if (data.image) formData.append('image', data.image);
+    formData.append('accessType', data.accessType || 'free');
+    if (data.price) formData.append('price', String(data.price));
+    if (data.image) formData.append('cover', data.image);  // Match backend: field name is 'cover'
 
-    // Send without Authorization header (use backend without auth)
+    // Get auth token if available
+    const token = localStorage.getItem('authToken');
+
+   
+    Array.from(formData.entries()).forEach(([k, v]) => {
+        if (v instanceof File) {
+            console.log(`  - ${k}: File(${v.name}, ${v.size} bytes)`);
+        } else {
+            console.log(`  - ${k}: ${v}`);
+        }
+    });
+
+    // Send with Authorization header if available
     const res = await fetch(`/api/stories/${encodeURIComponent(storyId)}/chapters`, {
         method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: formData as unknown as BodyInit,
     });
+
 
     if (!res.ok) {
         const text = await res.text();
         let json;
         try { json = JSON.parse(text); } catch { json = { message: text }; }
-        throw new Error(json?.message || `Request failed: ${res.status}`);
+        throw new Error(json?.message || json?.error || `Request failed: ${res.status}`);
     }
 
-    return res.json();
+    const result = await res.json();
+    return result;
 }
 
 import { imageUrl } from './config';
@@ -68,67 +86,6 @@ export async function getStoriesByAuthor(authorId: string, page?: number, limit?
 
     if (!res.ok) {
         const text = await res.text();
-        let json;
-        try { json = JSON.parse(text); } catch { json = { message: text }; }
-        throw new Error(json?.message || `Request failed: ${res.status}`);
-    }
-
-    const json = await res.json();
-    return normalizeImageFields(json);
-}
-
-export async function createStory(data: {
-    title: string;
-    description?: string;
-    isDraft?: boolean;
-    cover?: File | null;
-}) {
-    if (!data?.title) throw new Error('title is required');
-
-    // If cover is provided, send as FormData (multipart). Do not include Authorization.
-    if (data.cover) {
-        const form = new FormData();
-        form.append('title', data.title);
-        form.append('description', data.description ?? '');
-        form.append('isDraft', data.isDraft ? 'true' : 'false');
-        // Append the uploaded file under multiple common field names so backends
-        // that expect different keys (e.g. 'image', 'file', 'cover') will receive it.
-        form.append('cover', data.cover);
-        form.append('image', data.cover);
-        form.append('file', data.cover);
-
-        const res = await fetch('/api/stories', {
-            method: 'POST',
-            body: form as unknown as BodyInit,
-        });
-
-        if (!res.ok) {
-            const text = await res.text();
-            let json;
-            try { json = JSON.parse(text); } catch { json = { message: text }; }
-            throw new Error(json?.message || `Request failed: ${res.status}`);
-        }
-
-        const json = await res.json();
-        return normalizeImageFields(json);
-    }
-
-    const res = await fetch('/api/stories', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            title: data.title,
-            description: data.description ?? '',
-            isDraft: !!data.isDraft,
-        }),
-    });
-
-    if (!res.ok) {
-        const text = await res.text();
-        let json;
-        try { json = JSON.parse(text); } catch { json = { message: text }; }
         throw new Error(json?.message || `Request failed: ${res.status}`);
     }
 

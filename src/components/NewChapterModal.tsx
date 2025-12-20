@@ -65,10 +65,6 @@ export default function NewChapterModal({ initialStoryId = '', onCreated }: Prop
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label className="text-sm text-slate-600">Story ID</label>
-                                <input value={storyId} onChange={(e) => setStoryId(e.target.value)} className="w-full mt-1 px-3 py-2 border rounded-lg" />
-                            </div>
-                            <div>
                                 <label className="text-sm text-slate-600">Title</label>
                                 <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full mt-1 px-3 py-2 border rounded-lg" />
                             </div>

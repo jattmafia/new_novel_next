@@ -29,6 +29,27 @@ async function proxyPost(path: string, body: any, headers: Record<string, string
     }
 }
 
+export async function GET(request: Request) {
+    try {
+        const url = new URL(request.url);
+        const auth = request.headers.get('authorization') || '';
+
+        const forwardRes = await fetchWithTimeout(`${API_BASE}/stories`, {
+            method: 'GET',
+            headers: auth ? { Authorization: auth } : undefined,
+        }, 15000);
+
+        const forwardBody = await forwardRes.json();
+
+        return NextResponse.json(forwardBody, { status: forwardRes.status });
+    } catch (err: any) {
+        return NextResponse.json(
+            { message: err?.message || 'Internal error' },
+            { status: 500 }
+        );
+    }
+}
+
 export async function POST(request: Request) {
     try {
         const reqContentType = (request.headers.get('content-type') || '').toLowerCase();

@@ -2,7 +2,6 @@ import Image from "next/image";
 import { Metadata } from "next";
 import ProfileOwnerView from "../../components/ProfileOwnerView";
 import LogoutButton from "../../components/LogoutButton";
-import NewChapterModal from "../../components/NewChapterModal";
 import NewStoryModal from "../../components/NewStoryModal";
 import UserNotFound from "../../components/UserNotFound";
 import { API_BASE, imageUrl } from '@/lib/config';
@@ -195,7 +194,6 @@ export default async function UserProfilePage({ params }: Props) {
                             <ProfileOwnerView username={username}>
                                 <div className="flex items-center gap-3">
                                     <NewStoryModal />
-                                    <NewChapterModal />
                                     <button className="px-6 py-2.5 border-2 border-purple-300 text-purple-600 rounded-lg font-semibold hover:bg-purple-50 hover:border-purple-400 transition-all text-sm">
                                         Manage
                                     </button>
@@ -240,7 +238,7 @@ export default async function UserProfilePage({ params }: Props) {
                                     <h3 className="text-lg font-semibold mb-1">{s.title}</h3>
                                     <p className="text-sm text-slate-600 mb-3">{s.description ?? s.summary ?? ''}</p>
                                     <div className="flex items-center justify-between">
-                                        <a href={`#`} className="text-sm text-purple-600 font-semibold">View</a>
+                                        <a href={`/story/${s._id || s.id}`} className="text-sm text-purple-600 font-semibold hover:text-purple-700">View</a>
                                         <span className="text-xs text-slate-500">{s.chapterCount ? `${s.chapterCount} chapters` : ''}</span>
                                     </div>
                                 </div>

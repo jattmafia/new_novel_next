@@ -57,12 +57,15 @@ export function middleware(request: NextRequest) {
         }
 
         // 4. Rewrite logic for Subdomain
-        // Rewrite ALL paths to include the subdomain as username prefix
-        // e.g., /discover on user.localhost becomes /user/discover
-        // e.g., / on user.localhost becomes /user
-        console.log(`[Middleware] Rewriting ${url.pathname} to /${subdomain}${url.pathname === '/' ? '' : url.pathname}`);
-        url.pathname = `/${subdomain}${url.pathname === '/' ? '' : url.pathname}`;
-        return NextResponse.rewrite(url);
+        // Only rewrite if the pathname doesn't already start with the subdomain
+        // This prevents double rewriting (e.g., /aaaaaaasddd/story/... becoming /aaaaaaasddd/aaaaaaasddd/story/...)
+        if (!url.pathname.startsWith(`/${subdomain}`)) {
+            console.log(`[Middleware] Rewriting ${url.pathname} to /${subdomain}${url.pathname === '/' ? '' : url.pathname}`);
+            url.pathname = `/${subdomain}${url.pathname === '/' ? '' : url.pathname}`;
+            return NextResponse.rewrite(url);
+        }
+
+        return NextResponse.next();
     }
 
     return NextResponse.next();
