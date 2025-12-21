@@ -1,3 +1,45 @@
+export async function createStory(data: {
+    title: string;
+    description?: string;
+    cover?: File | null;
+    isDraft?: boolean;
+}) {
+    const formData = new FormData();
+    formData.append('title', data.title ?? 'Untitled');
+    formData.append('description', data.description ?? '');
+    formData.append('isDraft', String(data.isDraft ?? true));
+    if (data.cover) formData.append('cover', data.cover);
+
+    // Get auth token if available
+    const token = localStorage.getItem('authToken');
+
+    console.log('[createStory] FormData entries:');
+    Array.from(formData.entries()).forEach(([k, v]) => {
+        if (v instanceof File) {
+            console.log(`  - ${k}: File(${v.name}, ${v.size} bytes)`);
+        } else {
+            console.log(`  - ${k}: ${v}`);
+        }
+    });
+
+    // Send with Authorization header if available
+    const res = await fetch(`/api/stories`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: formData as unknown as BodyInit,
+    });
+
+    if (!res.ok) {
+        const text = await res.text();
+        let json;
+        try { json = JSON.parse(text); } catch { json = { message: text }; }
+        throw new Error(json?.message || json?.error || `Request failed: ${res.status}`);
+    }
+
+    const result = await res.json();
+    return result;
+}
+
 export async function createChapter(storyId: string, data: {
     title: string;
     content: string;
@@ -20,7 +62,7 @@ export async function createChapter(storyId: string, data: {
     // Get auth token if available
     const token = localStorage.getItem('authToken');
 
-   
+
     Array.from(formData.entries()).forEach(([k, v]) => {
         if (v instanceof File) {
             console.log(`  - ${k}: File(${v.name}, ${v.size} bytes)`);
@@ -86,6 +128,8 @@ export async function getStoriesByAuthor(authorId: string, page?: number, limit?
 
     if (!res.ok) {
         const text = await res.text();
+        let json;
+        try { json = JSON.parse(text); } catch { json = { message: text }; }
         throw new Error(json?.message || `Request failed: ${res.status}`);
     }
 
