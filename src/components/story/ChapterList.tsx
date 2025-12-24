@@ -4,33 +4,36 @@ import Image from "next/image";
 import Link from "next/link";
 import { Chapter } from "@/lib/useStory";
 import { imageUrl } from "@/lib/config";
-import { Lock } from "lucide-react";
+import { BookOpen, Lock } from "lucide-react";
 
 interface ChapterListProps {
     chapters: Chapter[];
     storyId: string;
 }
 
-export default function ChapterList({ chapters, storyId }: ChapterListProps) {
-    if (chapters.length === 0) {
-        return (
-            <div className="py-12 text-center">
-                <h2 className="text-lg font-bold mb-2">No Chapters Yet</h2>
-                <p className="text-gray-500">
-                    No chapters published yet. Check back soon!
-                </p>
-            </div>
-        );
-    }
+const stripHtml = (html: string) => {
+    if (!html) return "";
+    // Remove HTML tags
+    const tmp = html.replace(/<[^>]*>?/gm, " ");
+    // Decode basic entities and clean up whitespace
+    return tmp
+        .replace(/&nbsp;/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+};
 
+export default function ChapterList({ chapters, storyId }: ChapterListProps) {
     const publishedChapters = chapters.filter((ch) => ch.isPublished);
 
     if (publishedChapters.length === 0) {
         return (
-            <div className="py-12 text-center">
-                <h2 className="text-lg font-bold mb-2">No Published Chapters</h2>
-                <p className="text-gray-500">
-                    Check back soon for new chapters.
+            <div className="py-20 text-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <BookOpen className="w-10 h-10 text-gray-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">No Chapters Published</h2>
+                <p className="text-gray-500 max-w-xs mx-auto">
+                    The author hasn't published any chapters for this story yet. Check back soon!
                 </p>
             </div>
         );
@@ -64,7 +67,9 @@ export default function ChapterList({ chapters, storyId }: ChapterListProps) {
                                     <span className="text-sm font-semibold text-gray-500">Ch. {chapter.chapterNumber}</span>
                                     <h3 className="font-semibold text-gray-900 truncate group-hover:text-purple-600 transition-colors">{chapter.title}</h3>
                                 </div>
-                                <p className="text-sm text-gray-600 mt-2 line-clamp-2">{(chapter.content && chapter.content.slice(0, 140)) || ''}</p>
+                                <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                                    {stripHtml(chapter.content || "")}
+                                </p>
                                 <p className="text-xs text-gray-500 mt-2">{chapter.wordCount?.toLocaleString() || 0} words • {Math.max(1, Math.ceil((chapter.wordCount || 0) / 200))} min</p>
                             </div>
 

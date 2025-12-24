@@ -5,6 +5,8 @@ import { useStory, useChapters } from "@/lib/useStory";
 import StoryHeader from "./StoryHeader";
 import ChapterList from "./ChapterList";
 import Spinner from "@/components/Spinner";
+import Link from "next/link";
+import { Play } from "lucide-react";
 
 interface StoryDetailWrapperProps {
     params: Promise<{
@@ -43,6 +45,9 @@ export default function StoryDetailWrapper({
     const { story, loading: storyLoading, error: storyError } =
         useStory(storyId);
     const { chapters, loading: chaptersLoading } = useChapters(storyId);
+
+    const publishedChapters = chapters.filter((ch) => ch.isPublished);
+    const firstChapter = publishedChapters[0];
 
     // Handle loading and error states
     if (paramsLoading) {
@@ -83,6 +88,22 @@ export default function StoryDetailWrapper({
 
             {/* Main Content - Centered */}
             <div className="max-w-4xl mx-auto px-4 py-12">
+                {/* Start Reading CTA */}
+                {publishedChapters.length > 0 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 py-8 border-t border-b border-gray-200 mb-8">
+                        <span className="text-lg font-semibold text-gray-900">
+                            Ready to start reading?
+                        </span>
+                        <Link
+                            href={`/story/${storyId}/chapter/${firstChapter._id}`}
+                            className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+                        >
+                            <Play className="w-5 h-5" />
+                            Read Chapter {firstChapter.chapterNumber}
+                        </Link>
+                    </div>
+                )}
+
                 {/* Chapter Content or Default View */}
                 <div className="prose max-w-none mx-auto">{children}</div>
 

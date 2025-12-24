@@ -49,3 +49,88 @@ body {
 .animation-delay-2000 {
   animation-delay: 2s;
 }
+
+/* Tiptap Placeholder */
+.tiptap p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Tiptap Focus */
+.tiptap:focus {
+  outline: none;
+}
+
+/* Tiptap Text Align */
+.tiptap .text-align-left {
+  text-align: left;
+}
+
+.tiptap .text-align-center {
+  text-align: center;
+}
+
+.tiptap .text-align-right {
+  text-align: right;
+}
+
+.tiptap .text-align-justify {
+  text-align: justify;
+}
+
+/* Reader Content Styles (for rendered HTML) */
+.prose .text-align-left {
+  text-align: left;
+}
+
+.prose .text-align-center {
+  text-align: center;
+}
+
+.prose .text-align-right {
+  text-align: right;
+}
+
+.prose .text-align-justify {
+  text-align: justify;
+}
+
+.prose mark {
+  background-color: #ffff00;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.125rem;
+}
+
+/* Ensure prose elements inherit color when custom color is set */
+.prose {
+  color: inherit;
+}
+
+.prose p,
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose strong,
+.prose em,
+.prose li,
+.prose blockquote {
+  color: inherit;
+}
+
+/* Force custom color to override everything including inline styles */
+[style*="--custom-reader-color"] {
+  color: var(--custom-reader-color) !important;
+}
+
+[style*="--custom-reader-color"] * {
+  color: var(--custom-reader-color) !important;
+}
+
+/* Ensure Tiptap/Prose specific elements also follow the color */
+[style*="--custom-reader-color"] :is(p, h1, h2, h3, h4, h5, h6, span, strong, em, li, blockquote, a) {
+  color: var(--custom-reader-color) !important;
+}

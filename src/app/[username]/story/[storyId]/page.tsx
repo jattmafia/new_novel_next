@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 import StoryDetailWrapper from "@/components/story/StoryDetailWrapper";
-import StoryPageContent from "./page.content";
 
 export async function generateMetadata({
     params,
@@ -66,7 +65,7 @@ export default function StoryPage({
 }) {
     return (
         <StoryDetailWrapper params={params}>
-            <StoryPageContent params={params} />
+            {/* Additional content can go here if needed */}
         </StoryDetailWrapper>
     );
 }

@@ -86,6 +86,11 @@ export function useChapters(storyId: string, token?: string) {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        if (!storyId) {
+            setLoading(false);
+            return;
+        }
+
         const fetchChapters = async () => {
             try {
                 setLoading(true);
@@ -152,22 +157,22 @@ export function useChapter(storyId: string, chapterId: string, token?: string) {
                     headers["Authorization"] = `Bearer ${token}`;
                 }
 
-             
+
                 const response = await fetch(
                     `/api/stories/${storyId}/chapters/${chapterId}`,
                     { headers }
                 );
 
-             
+
                 if (!response.ok) {
                     throw new Error(`Failed to fetch chapter (${response.status})`);
                 }
 
                 const data = await response.json();
-              
+
                 // Handle different response formats
                 const chapterData = data.chapter || data.data || data;
-               
+
                 setChapter(chapterData);
                 setError(null);
             } catch (err) {
