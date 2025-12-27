@@ -22,6 +22,16 @@ export function middleware(request: NextRequest) {
 
     // 1. Skip if current hostname matches the appDomain (Root Domain)
     if (hostname === appDomain || hostname === "localhost" || hostname === "127.0.0.1") {
+        // Check if user is logged in on root domain and on home page - redirect to dashboard
+        if (pathname === "/") {
+            const authToken = request.cookies.get("authToken")?.value;
+            if (authToken) {
+                console.log(`[Middleware] User logged in on home page, redirecting to dashboard`);
+                const url = request.nextUrl.clone();
+                url.pathname = "/dashboard";
+                return NextResponse.redirect(url);
+            }
+        }
         return NextResponse.next();
     }
 
@@ -44,14 +54,19 @@ export function middleware(request: NextRequest) {
 
         const url = request.nextUrl.clone();
 
-        // 3. Handle Auth redirects (Login/Signup should be on Root Domain)
-        const isAuthPath = url.pathname.startsWith("/login") ||
+        // 3. Handle Protected Routes (should be on Root Domain)
+        const isProtectedPath = url.pathname.startsWith("/login") ||
             url.pathname.startsWith("/signup") ||
-            url.pathname.startsWith("/auth");
+            url.pathname.startsWith("/auth") ||
+            url.pathname.startsWith("/me") ||
+            url.pathname.startsWith("/dashboard");
 
-        if (isAuthPath) {
-            console.log(`[Middleware] Auth path ${url.pathname} on subdomain, allowing relative access`);
-            return NextResponse.next();
+        if (isProtectedPath) {
+            console.log(`[Middleware] Protected path ${url.pathname} on subdomain, redirecting to root domain`);
+            // Redirect to root domain for protected routes
+            const rootDomainUrl = new URL(url);
+            rootDomainUrl.hostname = appDomain;
+            return NextResponse.redirect(rootDomainUrl);
         }
 
         // 4. Rewrite logic for Subdomain

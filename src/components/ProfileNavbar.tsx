@@ -3,30 +3,48 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { User, LogOut, BookOpen, ChevronDown } from "lucide-react";
+import { User, LogOut, BookOpen, ChevronDown, Settings } from "lucide-react";
 import { useSessionSync } from "@/lib/SessionContext";
+import { imageUrl } from "@/lib/config";
 
 interface ProfileNavbarProps {
     username?: string;
+    name?: string;
     avatarUrl?: string;
 }
 
-export default function ProfileNavbar({ username: propUsername, avatarUrl }: ProfileNavbarProps) {
+export default function ProfileNavbar({ username: propUsername, name: propName, avatarUrl }: ProfileNavbarProps) {
     const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
+    const [loggedInName, setLoggedInName] = useState<string | null>(null);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const { isSessionSynced } = useSessionSync();
 
     useEffect(() => {
-        const storedUsername = localStorage.getItem("webnovelUsername");
-        if (storedUsername) {
-            setLoggedInUser(storedUsername);
-        } else {
-            setLoggedInUser(null);
-        }
+        const updateUserInfo = () => {
+            const storedUsername = localStorage.getItem("webnovelUsername");
+            const storedName = localStorage.getItem("webnovelName");
+            
+            if (storedUsername) {
+                setLoggedInUser(storedUsername);
+            } else {
+                setLoggedInUser(null);
+            }
+
+            if (storedName) {
+                setLoggedInName(storedName);
+            } else {
+                setLoggedInName(null);
+            }
+        };
+
+        updateUserInfo();
+        
+        window.addEventListener("profileUpdated", updateUserInfo);
+        return () => window.removeEventListener("profileUpdated", updateUserInfo);
     }, [isSessionSynced]);
 
     // Left side identity (profile being viewed); right side account (logged-in user)
-    const profileName = propUsername || loggedInUser || "Profile";
+    const profileName = propName || propUsername || loggedInName || loggedInUser || "Profile";
     const profileInitial = profileName.charAt(0).toUpperCase();
     const profileHref = propUsername ? `/${propUsername}` : loggedInUser ? `/${loggedInUser}` : "/";
 
@@ -57,7 +75,7 @@ export default function ProfileNavbar({ username: propUsername, avatarUrl }: Pro
                     <Link href={profileHref} className="flex items-center gap-3 group">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-amber-500 shadow-lg ring-2 ring-white/70 overflow-hidden flex items-center justify-center text-white font-black text-base group-hover:scale-110 transition-transform relative">
                             {avatarUrl ? (
-                                <Image src={avatarUrl} alt={`${profileName || "User"} avatar`} fill className="object-cover" />
+                                <Image src={imageUrl(avatarUrl) || ""} alt={`${profileName || "User"} avatar`} fill className="object-cover" />
                             ) : (
                                 <span>{profileInitial}</span>
                             )}
@@ -83,17 +101,33 @@ export default function ProfileNavbar({ username: propUsername, avatarUrl }: Pro
                                 </button>
 
                                 {showUserMenu && (
-                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
-                                        <Link 
-                                            href={`/${accountUsername}`}
-                                            className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                            onClick={() => setShowUserMenu(false)}
+                                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+                                        <button
+                                            onClick={() => {
+                                                setShowUserMenu(false);
+                                                const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN;
+                                                const proto = window.location.protocol;
+                                                const port = window.location.port ? `:${window.location.port}` : "";
+
+                                                if (APP_DOMAIN) {
+                                                    window.location.href = `${proto}//${APP_DOMAIN}${port}/me`;
+                                                } else {
+                                                    window.location.href = "/me";
+                                                }
+                                            }}
+                                            className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-purple-50 transition-colors w-full text-left bg-gradient-to-r from-purple-50/50 to-amber-50/50 border-b border-gray-100"
                                         >
-                                            <User className="w-4 h-4" /> Profile
-                                        </Link>
+                                            <div className="p-2 rounded-lg bg-linear-to-br from-purple-600 to-amber-500 text-white">
+                                                <Settings className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold">Profile Settings</p>
+                                                <p className="text-xs text-gray-500">Edit your info</p>
+                                            </div>
+                                        </button>
                                         <Link 
                                             href="/dashboard"
-                                            className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                                             onClick={() => setShowUserMenu(false)}
                                         >
                                             <BookOpen className="w-4 h-4" /> Dashboard

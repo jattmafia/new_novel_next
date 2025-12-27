@@ -8,12 +8,25 @@ export default function LogoutPage() {
     const router = useRouter();
 
     useEffect(() => {
-        // Clear all persistent authentication data
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("webnovelUsername");
+        const performLogout = async () => {
+            try {
+                // Call logout API to clear cookie on server
+                await fetch('/api/auth/logout', { method: 'POST' });
+            } catch (err) {
+                console.error('Logout API error:', err);
+            }
+            
+            // Clear all persistent authentication data from localStorage
+            localStorage.removeItem("authToken");
+            localStorage.removeItem("webnovelUsername");
+            localStorage.removeItem("webnovelName");
+            localStorage.removeItem("webnovelAvatar");
 
-        // Redirect to login immediately
-        router.replace("/login");
+            // Redirect to login
+            router.replace("/login");
+        };
+
+        performLogout();
     }, [router]);
 
     return (

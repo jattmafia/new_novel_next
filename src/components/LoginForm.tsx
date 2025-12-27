@@ -69,9 +69,13 @@ export default function LoginForm() {
 
                 // Persist username and redirect to their profile path
                 const username = response.data?.profile?.username;
+                const name = response.data?.name;
                 if (username) {
                     try {
                         localStorage.setItem("webnovelUsername", username);
+                        if (name) {
+                            localStorage.setItem("webnovelName", name);
+                        }
                     } catch (e) {
                         // ignore
                     }

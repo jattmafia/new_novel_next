@@ -37,7 +37,18 @@ export async function POST(request: Request) {
 
         const data = await resp.json().catch(() => ({ success: false }));
 
-        return NextResponse.json(data, { status: resp.status });
+        // If login successful, set authToken as a cookie
+        const response = NextResponse.json(data, { status: resp.status });
+        if (data.success && data.data?.token) {
+            response.cookies.set('authToken', data.data.token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 7 * 24 * 60 * 60, // 7 days
+                path: '/',
+            });
+        }
+        return response;
     } catch (err: any) {
         console.error('Proxy login error:', err);
         const msg = err?.message || (err?.cause && err.cause.message) || 'Proxy error';
