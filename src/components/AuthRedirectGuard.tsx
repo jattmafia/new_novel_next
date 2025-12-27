@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
+import { useSessionSync } from "@/lib/SessionContext";
 
 export default function AuthRedirectGuard() {
+    const { isSessionSynced } = useSessionSync();
+
     useEffect(() => {
+        if (!isSessionSynced) return;
+
         try {
             // Escape hatch: ?force=true clears storage to fix loops
             const params = new URLSearchParams(window.location.search);
@@ -22,34 +27,9 @@ export default function AuthRedirectGuard() {
             if (!token) return;
 
             const username = localStorage.getItem("webnovelUsername");
-            const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN;
-            const proto = window.location.protocol;
 
-            // Avoid redirecting if we are already on the SUBDOMAIN
-            // Check if current hostname ends with appDomain
-            if (APP_DOMAIN && window.location.hostname.endsWith(`.${APP_DOMAIN}`)) {
-                // We are on a subdomain. Do not redirect "away" to the same subdomain 
-                // unless the logic below detects we are on the WRONG subdomain?
-                // But typically AuthRedirectGuard is only on the Root Landing Page?
-                // Wait, AuthRedirectGuard is in `src/app/page.tsx` (Root) and `src/app/login/page.tsx`.
-                // If the USER is on `username.localhost:3000`, that is technically the SAME Next.js app but `middleware` rewrites it.
-                // Middleware rewrites `username.localhost` -> `/username`.
-                // Does `/src/app/page.tsx` render on `/username`? 
-                // NO! `/src/app/[username]/page.tsx` renders.
-                // So AuthRedirectGuard is NOT present on the subdomain profile page.
-                // UNLESS `src/app/layout.tsx` imports it? No.
-                // So AuthRedirectGuard ONLY runs on `localhost:3000` (Landing) and `/login`.
-
-                // So, if we are here, we are on localhost:3000 (or `www`).
-                // We SHOULD redirect to subdomain if logged in.
-            }
-
-            const buildProfileUrl = (u: string) =>
-                APP_DOMAIN
-                    ? `${proto}//${encodeURIComponent(u)}.${APP_DOMAIN}${window.location.port ? `:${window.location.port}` : ""}`
-                    : `/${encodeURIComponent(u)}`;
-            const buildCreateProfileUrl = () =>
-                APP_DOMAIN ? `${proto}//${APP_DOMAIN}${window.location.port ? `:${window.location.port}` : ""}/auth/create-profile` : "/auth/create-profile";
+            const buildProfileUrl = (u: string) => `/${encodeURIComponent(u)}`;
+            const buildCreateProfileUrl = () => "/auth/create-profile";
 
             const destination = username ? buildProfileUrl(username) : buildCreateProfileUrl();
 

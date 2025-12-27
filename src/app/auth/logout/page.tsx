@@ -12,15 +12,8 @@ export default function LogoutPage() {
         localStorage.removeItem("authToken");
         localStorage.removeItem("webnovelUsername");
 
-        // Optional: clear any other related items
-        // localStorage.clear(); 
-
-        // Redirect to login after a brief moment
-        const timer = setTimeout(() => {
-            router.replace("/login");
-        }, 1000);
-
-        return () => clearTimeout(timer);
+        // Redirect to login immediately
+        router.replace("/login");
     }, [router]);
 
     return (

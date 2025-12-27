@@ -6,6 +6,7 @@ import { Story } from "@/lib/useStory";
 import { imageUrl } from "@/lib/config";
 import { Heart, Share2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useSessionSync } from "@/lib/SessionContext";
 
 interface StoryHeaderProps {
     story: Story;
@@ -20,14 +21,17 @@ export default function StoryHeader({
 }: StoryHeaderProps) {
     const [isLiked, setIsLiked] = useState(false);
     const [isAuthor, setIsAuthor] = useState(false);
+    const { isSessionSynced } = useSessionSync();
 
     useEffect(() => {
         // Check if current user is the author
         const storedUsername = localStorage.getItem("webnovelUsername");
         if (storedUsername) {
             setIsAuthor(storedUsername === username);
+        } else {
+            setIsAuthor(false);
         }
-    }, [username]);
+    }, [username, isSessionSynced]);
 
     const handleShare = async () => {
         if (navigator.share) {
@@ -68,7 +72,6 @@ export default function StoryHeader({
                     <div className="absolute inset-0 flex flex-col justify-center items-center text-center">
                         <div className="max-w-4xl mx-auto px-8">
                             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white drop-shadow-2xl leading-none mb-6">{story.title}</h1>
-                            <p className="text-lg md:text-xl text-white/90 mt-4 max-w-3xl mx-auto drop-shadow-lg">{story.description}</p>
 
                             {isAuthor && (
                                 <div className="mt-10">
@@ -86,13 +89,25 @@ export default function StoryHeader({
                     </div>
                 </div>
             ) : (
-                <div className="bg-linear-to-br from-purple-600 to-amber-500 max-w-4xl mx-auto px-8 py-16 rounded-2xl shadow-2xl m-4">
-                    <h1 className="text-5xl md:text-6xl font-black text-white mb-4 drop-shadow-lg">{story.title}</h1>
-                    <p className="text-lg text-white/90 drop-shadow-md">{story.description}</p>
+                <div className="pt-24 px-4">
+                    <div className="bg-linear-to-br from-purple-600 to-amber-500 max-w-4xl mx-auto px-8 py-16 rounded-2xl shadow-2xl">
+                        <h1 className="text-5xl md:text-6xl font-black text-white mb-4 drop-shadow-lg">{story.title}</h1>
+                    </div>
                 </div>
             )}
 
             <div className="max-w-4xl mx-auto px-4 py-10">
+                {/* Synopsis Section */}
+                <div className="mb-12 bg-gray-50 p-8 rounded-3xl border border-gray-100">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <span className="w-8 h-1 bg-purple-600 rounded-full"></span>
+                        Synopsis
+                    </h2>
+                    <p className="text-lg text-gray-700 leading-relaxed whitespace-pre-wrap italic">
+                        {story.description}
+                    </p>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                     <div className="p-6 bg-linear-to-br from-purple-50 to-purple-100 rounded-2xl border-2 border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                         <div className="text-sm font-semibold text-purple-600 uppercase">📚 Chapters</div>

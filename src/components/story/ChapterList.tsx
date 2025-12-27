@@ -51,39 +51,79 @@ export default function ChapterList({ chapters, storyId }: ChapterListProps) {
                     <Link
                         key={chapter._id}
                         href={`/story/${storyId}/chapter/${chapter._id}`}
-                        className="block p-4 bg-white border border-gray-100 rounded-xl hover:shadow-lg hover:-translate-y-1 transition-all group"
+                        className="block p-5 bg-white border border-gray-100 rounded-2xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden"
                     >
-                        <div className="flex items-start justify-between gap-4">
-                            {chapter.coverImage ? (
-                                <div className="w-20 h-14 shrink-0 overflow-hidden rounded-md bg-gray-100 mr-4">
-                                    <Image src={imageUrl(chapter.coverImage) || '/logo.png'} alt={chapter.title} width={160} height={112} className="object-cover" />
-                                </div>
-                            ) : (
-                                <div className="w-20 h-14 shrink-0 rounded-md bg-gray-50 mr-4 flex items-center justify-center text-xs text-gray-400">No Image</div>
-                            )}
+                        {/* Hover effect background */}
+                        <div className="absolute inset-0 bg-linear-to-r from-purple-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        
+                        <div className="relative flex flex-col sm:flex-row items-start gap-5">
+                            {/* Image and Main Info */}
+                            <div className="flex items-start gap-4 flex-1 min-w-0 w-full">
+                                {chapter.coverImage ? (
+                                    <div className="w-20 h-20 sm:w-28 sm:h-20 shrink-0 overflow-hidden rounded-xl bg-gray-100 shadow-inner">
+                                        <Image 
+                                            src={imageUrl(chapter.coverImage) || '/logo.png'} 
+                                            alt={chapter.title} 
+                                            width={160} 
+                                            height={112} 
+                                            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" 
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="w-20 h-20 sm:w-28 sm:h-20 shrink-0 rounded-xl bg-gray-50 flex flex-col items-center justify-center text-[10px] text-gray-400 border border-gray-100">
+                                        <BookOpen className="w-5 h-5 mb-1 opacity-20" />
+                                        No Cover
+                                    </div>
+                                )}
 
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-semibold text-gray-500">Ch. {chapter.chapterNumber}</span>
-                                    <h3 className="font-semibold text-gray-900 truncate group-hover:text-purple-600 transition-colors">{chapter.title}</h3>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md">
+                                            Chapter {chapter.chapterNumber}
+                                        </span>
+                                        {idx === 0 && (
+                                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
+                                                New
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h3 className="font-bold text-gray-900 text-lg sm:text-xl truncate group-hover:text-purple-600 transition-colors mb-1">
+                                        {chapter.title}
+                                    </h3>
+                                    <p className="text-sm text-gray-500 line-clamp-1 sm:line-clamp-2 leading-relaxed">
+                                        {stripHtml(chapter.content || "")}
+                                    </p>
+                                    <div className="flex items-center gap-3 mt-3">
+                                        <div className="flex items-center gap-1 text-xs font-bold text-gray-400">
+                                            <span>{chapter.wordCount?.toLocaleString() || 0} words</span>
+                                        </div>
+                                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                        <div className="flex items-center gap-1 text-xs font-bold text-gray-400">
+                                            <span>{Math.max(1, Math.ceil((chapter.wordCount || 0) / 200))} min read</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                                    {stripHtml(chapter.content || "")}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-2">{chapter.wordCount?.toLocaleString() || 0} words • {Math.max(1, Math.ceil((chapter.wordCount || 0) / 200))} min</p>
                             </div>
 
-                            <div className="flex flex-col items-end gap-3 ml-4">
+                            {/* Price and Action */}
+                            <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-0 border-gray-50 gap-4">
                                 {chapter.accessType === "paid" ? (
-                                    <div className="px-3 py-1 rounded-md bg-amber-50 text-amber-800 font-semibold flex items-center gap-2">
+                                    <div className="px-4 py-2 rounded-xl bg-amber-50 text-amber-800 font-black flex items-center gap-2 border border-amber-100 shadow-sm">
                                         <Lock className="w-4 h-4 text-amber-600" />
                                         <span className="text-sm">{chapter.currency === 'USD' ? '$' : '₹'}{chapter.price}</span>
                                     </div>
                                 ) : (
-                                    <div className="px-2 py-1 rounded-md bg-gray-100 text-gray-700 text-sm">Free</div>
+                                    <div className="px-4 py-2 rounded-xl bg-green-50 text-green-700 font-black text-sm border border-green-100 shadow-sm">
+                                        FREE
+                                    </div>
                                 )}
-
-                                <div className="text-sm text-gray-400">{idx === 0 ? 'Latest' : ''}</div>
+                                
+                                <div className="text-purple-600 font-black text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                    READ <span className="hidden sm:inline">CHAPTER</span>
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                     </Link>

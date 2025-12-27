@@ -63,6 +63,8 @@ export default function SignupForm() {
                     }
                 }, 700);
                 return;
+            } else {
+                setErrors({ submit: response.message || "Signup failed. Please try again." });
             }
         } catch (error) {
             setErrors({ submit: error instanceof Error ? error.message : "Signup failed" });

@@ -50,10 +50,8 @@ export function middleware(request: NextRequest) {
             url.pathname.startsWith("/auth");
 
         if (isAuthPath) {
-            console.log(`[Middleware] Redirecting auth path ${url.pathname} to root domain`);
-            const dest = new URL(url.pathname, `http://${appDomain}:${url.port || ""}`);
-            if (url.search) dest.search = url.search;
-            return NextResponse.redirect(dest);
+            console.log(`[Middleware] Auth path ${url.pathname} on subdomain, allowing relative access`);
+            return NextResponse.next();
         }
 
         // 4. Rewrite logic for Subdomain

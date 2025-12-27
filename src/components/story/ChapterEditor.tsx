@@ -6,6 +6,8 @@ import { createChapter } from "@/lib/storyService";
 import { ChevronLeft, Maximize2, Minimize2, Eye, Edit3, Settings } from "lucide-react";
 import Spinner from "@/components/Spinner";
 import RichTextEditor from "./RichTextEditor";
+import ProfileNavbar from "@/components/ProfileNavbar";
+import { useSessionSync } from "@/lib/SessionContext";
 
 interface ChapterEditorProps {
     storyId: string;
@@ -14,6 +16,7 @@ interface ChapterEditorProps {
 
 export default function ChapterEditor({ storyId, username }: ChapterEditorProps) {
     const router = useRouter();
+    const { isSessionSynced } = useSessionSync();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
@@ -47,6 +50,8 @@ export default function ChapterEditor({ storyId, username }: ChapterEditorProps)
 
     // Check if user is authorized to edit this story
     useEffect(() => {
+        if (!isSessionSynced) return;
+
         const storedUsername = localStorage.getItem("webnovelUsername");
 
         // If no user is logged in or username doesn't match, redirect to home
@@ -69,7 +74,7 @@ export default function ChapterEditor({ storyId, username }: ChapterEditorProps)
 
         setIsAuthorized(true);
         setIsChecking(false);
-    }, [username, router, storyId]);
+    }, [username, router, storyId, isSessionSynced]);
 
     // Keyboard shortcuts
     useEffect(() => {
@@ -171,9 +176,11 @@ export default function ChapterEditor({ storyId, username }: ChapterEditorProps)
     }
 
     return (
-        <div className={`min-h-screen ${isFocusMode ? 'bg-gray-50' : 'bg-white'} transition-colors duration-300`}>
+        <div className={`min-h-screen ${isFocusMode ? 'bg-gray-50' : 'bg-white pt-16'} transition-colors duration-300`}>
+            {!isFocusMode && <ProfileNavbar username={username} />}
+            
             {/* Header */}
-            <div className={`border-b border-gray-200 sticky top-0 bg-white/80 backdrop-blur-md z-40 transition-all ${isFocusMode ? 'opacity-0 hover:opacity-100' : 'opacity-100'}`}>
+            <div className={`border-b border-gray-200 sticky ${isFocusMode ? 'top-0' : 'top-16'} bg-white/80 backdrop-blur-md z-40 transition-all ${isFocusMode ? 'opacity-0 hover:opacity-100' : 'opacity-100'}`}>
                 <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button

@@ -3,6 +3,7 @@
 import { useChapter, useChapters } from "@/lib/useStory";
 import Spinner from "@/components/Spinner";
 import ChapterNav from "./ChapterNav";
+import ProfileNavbar from "@/components/ProfileNavbar";
 import { useEffect, useState, useRef } from "react";
 import { Settings, Maximize2, Minimize2, Sun, Moon, Coffee, Type, ChevronDown, Play, Pause, ArrowUp } from "lucide-react";
 import Link from "next/link";
@@ -71,6 +72,7 @@ export default function ChapterReader({ params }: ChapterReaderProps) {
     // Call hooks unconditionally (before any early returns)
     const storyId = paramsData?.storyId || "";
     const chapterId = paramsData?.chapterId || "";
+    const username = paramsData?.username || "";
     const { chapter, loading, error } = useChapter(storyId, chapterId);
     const { chapters } = useChapters(storyId || "");
 
@@ -144,7 +146,9 @@ export default function ChapterReader({ params }: ChapterReaderProps) {
     };
 
     return (
-        <div className={`min-h-screen transition-colors duration-300 ${themes[theme].bg} ${themes[theme].text}`}>
+        <div className={`min-h-screen transition-colors duration-300 ${themes[theme].bg} ${themes[theme].text} ${!isFullScreen ? 'pt-16' : ''}`}>
+            {!isFullScreen && <ProfileNavbar username={username} />}
+            
             {/* Chapter Header */}
             {!isFullScreen && (
                 <div className={`border-b ${themes[theme].border} py-12 bg-linear-to-br from-purple-50/50 to-amber-50/50`}>
@@ -176,7 +180,7 @@ export default function ChapterReader({ params }: ChapterReaderProps) {
             )}
 
             {/* Reading Controls */}
-            <div className={`sticky top-0 z-30 border-b backdrop-blur-md ${themes[theme].card} ${themes[theme].border} shadow-sm`}>
+            <div className={`sticky ${isFullScreen ? 'top-0' : 'top-16'} z-30 border-b backdrop-blur-md ${themes[theme].card} ${themes[theme].border} shadow-sm`}>
                 {/* Progress Bar */}
                 <div className="absolute top-0 left-0 h-1 bg-purple-600 transition-all duration-150" style={{ width: `${progress}%` }} />
 

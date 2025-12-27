@@ -5,6 +5,7 @@ import { useStory, useChapters } from "@/lib/useStory";
 import StoryHeader from "./StoryHeader";
 import ChapterList from "./ChapterList";
 import Spinner from "@/components/Spinner";
+import ProfileNavbar from "@/components/ProfileNavbar";
 import Link from "next/link";
 import { Play } from "lucide-react";
 
@@ -18,7 +19,7 @@ interface StoryDetailWrapperProps {
         storyId: string;
         storyTitle?: string;
     };
-    children: ReactNode;
+    children?: ReactNode;
 }
 
 export default function StoryDetailWrapper({
@@ -83,6 +84,8 @@ export default function StoryDetailWrapper({
 
     return (
         <div className="min-h-screen bg-white">
+            <ProfileNavbar username={username} />
+            
             {/* Story Header */}
             <StoryHeader story={story} chapterCount={chapters.length} username={username} />
 

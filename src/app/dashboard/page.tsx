@@ -1,8 +1,11 @@
 import LogoutButton from "@/components/LogoutButton";
+import ProfileNavbar from "@/components/ProfileNavbar";
 
 export default function DashboardPage() {
     return (
         <main className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-amber-950 relative overflow-hidden">
+            <ProfileNavbar />
+            
             {/* Animated background blobs */}
             <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
@@ -11,25 +14,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Content */}
-            <div className="relative z-10">
-                {/* Header */}
-                <header className="border-b border-white/10 backdrop-blur-xl bg-white/5">
-                    <div className="max-w-7xl mx-auto px-6 py-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-amber-400 bg-clip-text text-transparent">
-                                    📚 WebNovel
-                                </h1>
-                                <p className="text-gray-400 text-sm mt-1">Your story reading companion</p>
-                            </div>
-                            {/* Logout handled by client component to avoid passing event handlers from server */}
-                            <div>
-                                <LogoutButton />
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
+            <div className="relative z-10 pt-24">
                 {/* Main content */}
                 <div className="max-w-7xl mx-auto px-6 py-16">
                     {/* Welcome card */}

@@ -4,6 +4,7 @@ import ProfileOwnerView from "../../components/ProfileOwnerView";
 import LogoutButton from "../../components/LogoutButton";
 import NewStoryModal from "../../components/NewStoryModal";
 import UserNotFound from "../../components/UserNotFound";
+import ProfileNavbar from "../../components/ProfileNavbar";
 import { API_BASE, imageUrl } from '@/lib/config';
 
 interface Props {
@@ -126,32 +127,10 @@ export default async function UserProfilePage({ params }: Props) {
     return (
 
         <main className="min-h-screen bg-white text-slate-900">
-
-            {/* Header/Navigation */}
-            <header className="border-b border-purple-100 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
-                <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
-                    <a href="/" className="group flex items-center gap-2 hover:opacity-70 transition-opacity">
-                        <img
-                            src="/logo.png"
-                            alt="Rowllr"
-                            className="w-8 h-8 rounded-lg shadow-lg shadow-purple-500/20"
-                        />
-                        <div className="hidden sm:block">
-                            <span className="text-sm font-bold bg-linear-to-r from-purple-600 to-amber-600 bg-clip-text text-transparent">Rowllr</span>
-                        </div>
-                    </a>
-
-                    <div className="flex items-center gap-4">
-                        <input type="text" placeholder="Search creators..." className="hidden md:block px-4 py-2 rounded-lg bg-slate-50 border border-purple-200 text-slate-900 placeholder-slate-400 focus:border-purple-400 focus:outline-none transition-all text-sm focus:bg-white" />
-                        <ProfileOwnerView username={username}>
-                            <LogoutButton />
-                        </ProfileOwnerView>
-                    </div>
-                </div>
-            </header>
+            <ProfileNavbar username={username} />
 
             {/* Main Content */}
-            <div className="mx-auto max-w-6xl px-6 py-16">
+            <div className="mx-auto max-w-6xl px-6 py-16 pt-24">
                 {/* Profile Header */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-20">
                     {/* Avatar */}

@@ -172,15 +172,9 @@ export default function CreateProfileForm() {
                 setProfilePicturePreview(null);
                 setProfilePictureFile(null);
 
-                // Redirect to their profile (use subdomain when NEXT_PUBLIC_APP_DOMAIN is set)
+                // Redirect to their profile
                 setTimeout(() => {
-                    const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN;
-                    const proto = window.location.protocol;
-                    const port = window.location.port ? `:${window.location.port}` : "";
-                    const destination = APP_DOMAIN
-                        ? `${proto}//${encodeURIComponent(username)}.${APP_DOMAIN}${port}`
-                        : `/${encodeURIComponent(username)}`;
-                    window.location.href = destination;
+                    window.location.href = `/${encodeURIComponent(username)}`;
                 }, 500);
             }
         } catch (error) {
